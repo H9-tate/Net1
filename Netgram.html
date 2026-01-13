@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Netgram | The Sovereign Network</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --primary: #6366f1;
+            --bg-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-light);
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .neo-card {
+            background: white;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .active-nav { color: var(--primary); }
+        .active-nav::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .view-content { display: none; }
+        .view-content.active { display: block; animation: slideUp 0.4s ease-out; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .premium-border {
+            border: 2px solid;
+            border-image: linear-gradient(to right, #6366f1, #ec4899) 1;
+        }
+
+        .tab-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+
+        #auth-overlay { background: white; z-index: 1000; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="fixed inset-0 flex flex-col items-center justify-center p-8 text-center">
+        <div class="mb-8 relative">
+            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+                <rect width="100" height="100" rx="28" fill="url(#logo-grad)" />
+                <path d="M30 70V30L50 50L70 30V70" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                    <linearGradient id="logo-grad" x1="0" y1="0" x2="100" y2="100">
+                        <stop stop-color="#6366F1"/><stop offset="1" stop-color="#EC4899"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <h1 class="text-4xl font-black tracking-tighter mb-2">Netgram</h1>
+        <p class="text-slate-400 text-sm mb-12">Universal Sovereign Network</p>
+        <button onclick="handleLogin()" id="login-btn" class="w-full max-w-xs bg-slate-900 text-white py-5 rounded-[2rem] font-bold shadow-xl active:scale-95 transition">Secure Entry</button>
+    </div>
+
+    <!-- App Header -->
+    <header class="fixed top-0 w-full h-16 glass z-[100] flex items-center justify-between px-6 hidden" id="main-header">
+        <div class="flex items-center gap-2">
+             <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+                <rect width="100" height="100" rx="20" fill="url(#logo-grad)" />
+                <path d="M30 70V30L50 50L70 30V70" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="font-extrabold text-lg tracking-tight">Netgram</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="switchView('membership')" class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight">Upgrade</button>
+            <img id="user-avatar" src="" class="w-9 h-9 rounded-full border border-slate-200">
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="pt-20 pb-28 max-w-xl mx-auto px-4 hidden" id="main-app">
+        
+        <!-- FEED -->
+        <section id="feed-view" class="view-content active space-y-6">
+            <div class="flex gap-4 overflow-x-auto pb-2 no-scrollbar" id="stories-container">
+                <!-- Stories -->
+            </div>
+            
+            <div id="signals-container" class="space-y-4">
+                <div class="neo-card rounded-[2.5rem] p-8 text-center text-slate-400">
+                    <i class="fa-solid fa-spinner animate-spin text-2xl"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- DISCOVER / FRIENDS -->
+        <section id="discover-view" class="view-content space-y-6">
+            <h2 class="text-2xl font-black">Find Friends</h2>
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-400"></i>
+                <input type="text" placeholder="Search by Node ID or Name..." class="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 transition">
+            </div>
+            <div id="friends-list" class="space-y-3">
+                <!-- Friends loaded via JS -->
+            </div>
+        </section>
+
+        <!-- CREATE POST -->
+        <section id="create-view" class="view-content space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-black">Create Post</h2>
+                <div class="flex gap-2">
+                    <button class="tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition">Basic</button>
+                    <button onclick="switchView('membership')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-indigo-600 transition">Pro+</button>
+                </div>
+            </div>
+            
+            <div class="neo-card rounded-[2.5rem] p-6 space-y-6">
+                <textarea id="post-input" placeholder="What's happening in your node?" class="w-full h-32 bg-slate-50 rounded-2xl p-4 text-sm border-none outline-none resize-none"></textarea>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-3xl hover:border-indigo-400 cursor-pointer transition">
+                        <i class="fa-solid fa-video text-slate-400 mb-2"></i>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase">Upload Video</span>
+                        <input type="file" accept="video/*" class="hidden" onchange="handleFileSelect(this, 'video')">
+                    </label>
+                    <label class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-3xl hover:border-indigo-400 cursor-pointer transition">
+                        <i class="fa-solid fa-globe text-slate-400 mb-2"></i>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase">Deploy Site</span>
+                        <input type="file" accept=".html,.zip" class="hidden" onchange="handleFileSelect(this, 'site')">
+                    </label>
+                </div>
+                
+                <div id="file-preview" class="hidden bg-indigo-50 p-3 rounded-2xl flex items-center justify-between">
+                    <span class="text-xs font-bold text-indigo-600 truncate mr-4" id="file-name"></span>
+                    <button onclick="clearFile()" class="text-indigo-600"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <button onclick="submitPost()" id="post-btn" class="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black shadow-xl active:scale-95 transition">BROADCAST POST</button>
+            </div>
+        </section>
+
+        <!-- MEMBERSHIP -->
+        <section id="membership-view" class="view-content space-y-6">
+            <h2 class="text-2xl font-black">Upgrade Account</h2>
+            <div class="space-y-4">
+                <!-- Basic -->
+                <div class="neo-card p-6 rounded-[2.5rem] border-2 border-slate-100">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-black text-xl">Basic Node</h3>
+                            <p class="text-xs text-slate-400 italic">Core connectivity</p>
+                        </div>
+                        <span class="text-2xl font-black">$0</span>
+                    </div>
+                    <ul class="text-xs space-y-3 mb-6">
+                        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i> Text & Image posts</li>
+                        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i> Standard feed access</li>
+                    </ul>
+                    <button class="w-full py-3 rounded-2xl bg-slate-100 text-slate-400 font-bold text-sm cursor-default">Current Plan</button>
+                </div>
+
+                <!-- Pro -->
+                <div class="neo-card p-6 rounded-[2.5rem] border-2 border-indigo-500 bg-indigo-50/30">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-black text-xl">Pro Architect</h3>
+                                <span class="bg-indigo-600 text-white text-[8px] font-black px-2 py-0.5 rounded">POPULAR</span>
+                            </div>
+                            <p class="text-xs text-slate-400 italic">Advanced deployment</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-black">$12</span>
+                            <p class="text-[8px] text-slate-400 font-bold">PER MONTH</p>
+                        </div>
+                    </div>
+                    <ul class="text-xs space-y-3 mb-6">
+                        <li><i class="fa-solid fa-check text-indigo-500 mr-2"></i> 4K Video Uploads</li>
+                        <li><i class="fa-solid fa-check text-indigo-500 mr-2"></i> Custom Domain Deployment</li>
+                        <li><i class="fa-solid fa-check text-indigo-500 mr-2"></i> Ad-free Sovereign Feed</li>
+                    </ul>
+                    <button onclick="openPayment('Pro Architect', 12)" class="w-full py-4 rounded-2xl bg-indigo-600 text-white font-black text-sm shadow-lg shadow-indigo-200 active:scale-95 transition">UPGRADE NOW</button>
+                </div>
+
+                <!-- Premium+ -->
+                <div class="neo-card p-6 rounded-[2.5rem] border-2 border-slate-900 bg-slate-900 text-white">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-black text-xl">Premium+ Entity</h3>
+                            <p class="text-xs text-slate-400 italic">Total network mastery</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-black">$112</span>
+                            <p class="text-[8px] text-slate-400 font-bold">PER YEAR</p>
+                        </div>
+                    </div>
+                    <ul class="text-xs space-y-3 mb-6">
+                        <li><i class="fa-solid fa-star text-amber-400 mr-2"></i> Everything in Pro</li>
+                        <li><i class="fa-solid fa-star text-amber-400 mr-2"></i> Global Node Priority</li>
+                        <li><i class="fa-solid fa-star text-amber-400 mr-2"></i> Neural API Access</li>
+                    </ul>
+                    <button onclick="openPayment('Premium+ Entity', 112)" class="w-full py-4 rounded-2xl bg-white text-slate-900 font-black text-sm active:scale-95 transition">ACTIVATE ANNUAL</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section id="profile-view" class="view-content space-y-6">
+            <div class="text-center py-6">
+                <div class="relative w-24 h-24 mx-auto mb-4">
+                    <img id="profile-img" src="" class="w-full h-full rounded-full border-4 border-white shadow-xl">
+                    <div class="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 border-2 border-white rounded-full"></div>
+                </div>
+                <h2 class="text-2xl font-black" id="profile-name">Authenticating...</h2>
+                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1" id="profile-node-id"></p>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div class="neo-card p-4 rounded-3xl text-center">
+                    <p class="font-black text-lg" id="stat-posts">0</p>
+                    <p class="text-[8px] text-slate-400 font-bold uppercase">Posts</p>
+                </div>
+                <div class="neo-card p-4 rounded-3xl text-center">
+                    <p class="font-black text-lg">1.2k</p>
+                    <p class="text-[8px] text-slate-400 font-bold uppercase">Nodes</p>
+                </div>
+                <div class="neo-card p-4 rounded-3xl text-center">
+                    <p class="font-black text-lg">482</p>
+                    <p class="text-[8px] text-slate-400 font-bold uppercase">Signals</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="switchView('membership')" class="w-full flex items-center justify-between p-5 neo-card rounded-3xl hover:bg-slate-50 transition">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-crown text-amber-500"></i>
+                        <span class="text-sm font-bold">Subscription Management</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
+                </button>
+                <button onclick="location.reload()" class="w-full flex items-center justify-between p-5 neo-card rounded-3xl hover:bg-rose-50 group transition">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-power-off text-rose-500"></i>
+                        <span class="text-sm font-bold text-rose-600">Secure Logout</span>
+                    </div>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] hidden items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6">
+            <div class="text-center">
+                <h3 class="text-xl font-black mb-1">Secure Checkout</h3>
+                <p id="payment-plan-name" class="text-xs text-indigo-600 font-bold"></p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-slate-50 p-4 rounded-2xl flex items-center gap-4">
+                    <i class="fa-brands fa-cc-visa text-2xl text-slate-400"></i>
+                    <input type="text" placeholder="Card Number" class="bg-transparent text-sm w-full outline-none" value="**** **** **** 4242">
+                </div>
+                <div class="flex gap-4">
+                    <input type="text" placeholder="MM/YY" class="bg-slate-50 p-4 rounded-2xl text-sm w-1/2 outline-none">
+                    <input type="text" placeholder="CVC" class="bg-slate-50 p-4 rounded-2xl text-sm w-1/2 outline-none">
+                </div>
+            </div>
+
+            <button onclick="processPayment()" id="pay-btn" class="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black text-sm active:scale-95 transition">COMPLETE PURCHASE</button>
+            <button onclick="togglePaymentModal()" class="w-full text-slate-400 font-bold text-xs">Cancel Transaction</button>
+        </div>
+    </div>
+
+    <!-- Nav Bar -->
+    <nav class="fixed bottom-0 w-full h-20 glass z-[150] flex items-center justify-around px-4 pb-2 hidden" id="main-nav">
+        <button onclick="switchView('feed')" id="nav-feed" class="flex flex-col items-center gap-1 active-nav flex-1 relative transition">
+            <i class="fa-solid fa-house-signal text-xl"></i>
+            <span class="text-[8px] font-black uppercase">Home</span>
+        </button>
+        <button onclick="switchView('discover')" id="nav-discover" class="flex flex-col items-center gap-1 text-slate-400 flex-1 relative transition">
+            <i class="fa-solid fa-user-plus text-xl"></i>
+            <span class="text-[8px] font-black uppercase">Nodes</span>
+        </button>
+        <button onclick="switchView('create')" id="nav-create" class="flex-1 flex justify-center">
+            <div class="w-14 h-14 bg-slate-900 rounded-[1.4rem] flex items-center justify-center -mt-10 shadow-2xl text-white hover:scale-110 active:scale-90 transition">
+                <i class="fa-solid fa-plus text-xl"></i>
+            </div>
+        </button>
+        <button onclick="switchView('membership')" id="nav-membership" class="flex flex-col items-center gap-1 text-slate-400 flex-1 relative transition">
+            <i class="fa-solid fa-gem text-xl"></i>
+            <span class="text-[8px] font-black uppercase">Plans</span>
+        </button>
+        <button onclick="switchView('profile')" id="nav-profile" class="flex flex-col items-center gap-1 text-slate-400 flex-1 relative transition">
+            <i class="fa-solid fa-user-circle text-xl"></i>
+            <span class="text-[8px] font-black uppercase">Me</span>
+        </button>
+    </nav>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'netgram-social';
+
+        let currentUser = null;
+        let selectedFile = null;
+        let unsubFeed = null;
+
+        // RULE 3: Auth Before Queries
+        // Ensure authentication is fully awaited before proceeding
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Auth Failure:", e);
+            }
+        };
+
+        window.handleLogin = () => {
+            const btn = document.getElementById('login-btn');
+            btn.innerText = "Establishing Tunnel...";
+            initAuth();
+        };
+
+        // Track auth state and ONLY THEN start data listeners
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-header').classList.remove('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('main-nav').classList.remove('hidden');
+                
+                const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`;
+                document.getElementById('user-avatar').src = avatar;
+                document.getElementById('profile-img').src = avatar;
+                document.getElementById('profile-node-id').innerText = `NODE: ${user.uid.substring(0,16)}`;
+                document.getElementById('profile-name').innerText = `Human_${user.uid.substring(0,4)}`;
+                
+                // CRITICAL: Start listeners only after user object is populated
+                startDataListeners();
+            }
+        });
+
+        function startDataListeners() {
+            if (!currentUser) return;
+            loadFeed();
+            loadFriends();
+            loadStories();
+        }
+
+        // VIEW LOGIC
+        window.switchView = (viewId) => {
+            document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+            document.getElementById(`${viewId}-view`).classList.add('active');
+            
+            document.querySelectorAll('nav button').forEach(b => {
+                b.classList.remove('active-nav');
+                b.classList.add('text-slate-400');
+            });
+            const btn = document.getElementById(`nav-${viewId}`);
+            if(btn) { btn.classList.add('active-nav'); btn.classList.remove('text-slate-400'); }
+            window.scrollTo(0,0);
+        };
+
+        // CONTENT LOGIC
+        function loadFeed() {
+            if (!currentUser) return; // Guard
+            if (unsubFeed) unsubFeed();
+
+            const container = document.getElementById('signals-container');
+            // RULE 1: Strict Paths
+            const postsCol = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+            
+            unsubFeed = onSnapshot(postsCol, (snapshot) => {
+                container.innerHTML = '';
+                const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // RULE 2: Filter/Sort in memory
+                posts.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                document.getElementById('stat-posts').innerText = posts.filter(p => p.userId === currentUser.uid).length;
+
+                if (posts.length === 0) {
+                    container.innerHTML = '<div class="p-10 text-center text-slate-400">No signals in this sector.</div>';
+                    return;
+                }
+
+                posts.forEach(post => {
+                    const card = document.createElement('div');
+                    card.className = 'neo-card rounded-[2.5rem] overflow-hidden mb-4';
+                    card.innerHTML = `
+                        <div class="p-5 flex items-center gap-3">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${post.userId}" class="w-10 h-10 rounded-full bg-slate-100">
+                            <div>
+                                <p class="text-xs font-black">Node_${post.userId.substring(0,6)}</p>
+                                <p class="text-[9px] text-slate-400 font-bold uppercase">${post.timestamp ? new Date(post.timestamp).toLocaleTimeString() : 'Just now'}</p>
+                            </div>
+                        </div>
+                        <div class="px-5 pb-4">
+                            <p class="text-sm leading-relaxed text-slate-600">${post.text}</p>
+                            ${post.fileType ? `
+                                <div class="mt-4 p-4 bg-slate-900 rounded-[2rem] flex items-center justify-between text-white">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fa-solid fa-${post.fileType === 'video' ? 'play-circle' : 'browser'} text-xl"></i>
+                                        <span class="text-[10px] font-black uppercase tracking-widest">${post.fileType} Content</span>
+                                    </div>
+                                    <button class="bg-white/20 px-3 py-1.5 rounded-xl text-[10px] font-bold">VIEW</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="px-6 py-4 border-t border-slate-50 flex items-center justify-between">
+                            <div class="flex gap-6">
+                                <button class="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition"><i class="fa-regular fa-heart"></i> <span class="text-[10px] font-bold">1.2k</span></button>
+                                <button class="flex items-center gap-2 text-slate-400"><i class="fa-regular fa-comment"></i> <span class="text-[8px] font-bold uppercase">Signals</span></button>
+                            </div>
+                            <i class="fa-regular fa-paper-plane text-slate-300"></i>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }, (err) => {
+                console.error("Feed Listener Error:", err);
+                if (err.code === 'permission-denied') {
+                    // Critical fallback if token expires or state desyncs
+                    initAuth();
+                }
+            });
+        }
+
+        window.handleFileSelect = (input, type) => {
+            if(input.files && input.files[0]) {
+                selectedFile = { name: input.files[0].name, type: type };
+                document.getElementById('file-preview').classList.remove('hidden');
+                document.getElementById('file-name').innerText = `Ready: ${selectedFile.name}`;
+            }
+        };
+
+        window.clearFile = () => {
+            selectedFile = null;
+            document.getElementById('file-preview').classList.add('hidden');
+        };
+
+        window.submitPost = async () => {
+            const text = document.getElementById('post-input').value;
+            if(!text.trim() || !currentUser) return;
+            
+            const btn = document.getElementById('post-btn');
+            btn.disabled = true;
+            btn.innerText = "DEPLOYING...";
+
+            try {
+                // Ensure auth is solid
+                if (!auth.currentUser) await initAuth();
+
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
+                    userId: currentUser.uid,
+                    text: text,
+                    timestamp: Date.now(),
+                    fileType: selectedFile ? selectedFile.type : null,
+                    fileName: selectedFile ? selectedFile.name : null
+                });
+                
+                document.getElementById('post-input').value = '';
+                clearFile();
+                switchView('feed');
+            } catch (e) { 
+                console.error("Submission Error:", e);
+            } finally { 
+                btn.disabled = false; 
+                btn.innerText = "BROADCAST POST"; 
+            }
+        };
+
+        // PAYMENT FLOW
+        window.openPayment = (plan, price) => {
+            document.getElementById('payment-plan-name').innerText = `${plan} — $${price}`;
+            togglePaymentModal();
+        };
+
+        window.togglePaymentModal = () => {
+            const m = document.getElementById('payment-modal');
+            m.classList.toggle('hidden');
+            m.classList.toggle('flex');
+        };
+
+        window.processPayment = () => {
+            const btn = document.getElementById('pay-btn');
+            btn.innerText = "PROCESSING...";
+            setTimeout(() => {
+                togglePaymentModal();
+                btn.innerText = "COMPLETE PURCHASE";
+                switchView('profile');
+            }, 2000);
+        };
+
+        function loadFriends() {
+            const container = document.getElementById('friends-list');
+            const seeds = ['John', 'Sarah', 'Alex', 'Mina', 'Vince'];
+            container.innerHTML = seeds.map(s => `
+                <div class="neo-card p-4 rounded-3xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${s}" class="w-12 h-12 rounded-2xl bg-slate-50">
+                        <div>
+                            <p class="text-sm font-black">${s}_Node</p>
+                            <p class="text-[9px] text-emerald-500 font-black uppercase tracking-widest">Active Now</p>
+                        </div>
+                    </div>
+                    <button class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase">Link</button>
+                </div>
+            `).join('');
+        }
+
+        function loadStories() {
+            const container = document.getElementById('stories-container');
+            const seeds = ['story1', 'story2', 'story3', 'story4', 'story5'];
+            container.innerHTML = seeds.map(s => `
+                <div class="flex-shrink-0 flex flex-col items-center gap-1 group">
+                    <div class="w-16 h-16 rounded-[1.5rem] p-0.5 border-2 border-indigo-500 group-hover:scale-110 transition duration-300">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${s}" class="w-full h-full rounded-[1.3rem] bg-slate-100 object-cover">
+                    </div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${s}</span>
+                </div>
+            `).join('');
+        }
+
+    </script>
+</body>
+</html>
